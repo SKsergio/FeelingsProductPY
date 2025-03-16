@@ -1,4 +1,8 @@
 import pandas as pd
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
+from nltk.corpus import wordnet, stopwords
 
 def deleteRecords(df, col, col_or_row):
     if col_or_row == 1:
@@ -42,4 +46,16 @@ def process_null_values(data: pd.DataFrame) ->pd.Series: #tipamos la funcion her
         print('data limpiada maestro, que tengas un buen dia :)')
     else:
         print('No hay columnas con valores faltantes')
-        
+         
+#funcion de lematizacion y tokenizacion
+lemmatizer = WordNetLemmatizer()
+# Obtener stopwords en inglés
+stop_words = set(stopwords.words('english'))
+
+customs_stop_wards = stop_words - {"not", "no", "never", "ever"}#dejamos habilitadas estas palabras
+
+def tokenice_and_lemati(text):
+    tokens = word_tokenize(text.lower())#convertimos todo a minusc y luego lo tokenizamos jijijij
+    filter_tokens = [token for token in tokens if token not in customs_stop_wards]
+    lematized_tokens = [lemmatizer.lemmatize(token, pos='v') for token in filter_tokens]
+    return ' '.join(lematized_tokens)
