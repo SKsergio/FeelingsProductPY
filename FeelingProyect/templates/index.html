@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Analizador de Sentimientos</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css"
+    />
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      .hidden {
+        display: none;
+      } /* Ocultar elementos */
+      .loading-spinner {
+        display: none;
+        margin: 10px auto;
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        border-left-color: #007bff;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar bg-dark">
+      <div class="container-fluid">
+        <a class="navbar-brand text-white fw-bold" href="#">
+          <i class="bi bi-emoji-sunglasses"></i> TRIBE ECHO
+        </a>
+      </div>
+    </nav>
+
+    <div class="container mt-5 text-center">
+      <h2 class="mb-4 text-primary">
+        <i class="bi bi-chat-square-heart"></i> Sentiment analysis
+      </h2>
+
+      <div class="mb-3 text-start">
+        <label for="reviewInput" class="form-label">Write your review:</label>
+        <textarea id="reviewInput" class="form-control" rows="3"></textarea>
+      </div>
+
+      <button id="analyzeBtn" class="btn btn-primary w-100">
+        Analyze sentiment
+      </button>
+
+      <!-- Spinner de carga -->
+      <div class="loading-spinner" id="loadingSpinner"></div>
+
+      <div class="mt-4 hidden" id="resultDashboard">
+        <div class="row">
+          <div class="col-md-4">
+            <div class="card text-center">
+              <div class="card-body">
+                <h5 class="card-title">Sentiment</h5>
+                <p id="sentimentResult" class="fw-bold">---</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card text-center">
+              <div class="card-body">
+                <h5 class="card-title">Message</h5>
+                <p id="messageResult">---</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card text-center">
+              <div class="card-body">
+                <h5 class="card-title">Rating</h5>
+                <p id="ratingResult">---</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gráfico de tendencias -->
+      <canvas
+        id="sentimentChart"
+        class="mt-4"
+        width="400"
+        height="200"
+      ></canvas>
+    </div>
+
+    <script>
+      document
+        .getElementById("analyzeBtn")
+        .addEventListener("click", function () {
+          let reviewText = document.getElementById("reviewInput").value.trim();
+          let resultDashboard = document.getElementById("resultDashboard");
+          let sentimentText = document.getElementById("sentimentResult");
+          let messageResult = document.getElementById("messageResult");
+          let ratingResult = document.getElementById("ratingResult");
+          let spinner = document.getElementById("loadingSpinner");
+
+          if (reviewText === "") {
+            alert("❌ Por favor, escribe una reseña antes de analizar.");
+            return;
+          }
+
+          // Mostrar spinner de carga
+          spinner.style.display = "block";
+          resultDashboard.classList.add("hidden");
+
+          setTimeout(() => {
+            // Simulación de análisis de sentimiento
+            let sentiments = ["Positive", "Negative", "Neutral"];
+            let colors = { Positivo: "green", Negativo: "red", Neutro: "gray" };
+            let messages = {
+              Positivo: "That's great! Your review is positive.",
+              Negativo: "It seems that it was not a good experience.",
+              Neutro: "Your review is neutral.",
+            };
+            let ratings = {
+              Positivo: "★★★★★",
+              Negativo: "★☆☆☆☆",
+              Neutro: "★★★☆☆",
+            };
+
+            let randomSentiment =
+              sentiments[Math.floor(Math.random() * sentiments.length)];
+
+            // Asignar valores dinámicos
+            sentimentText.textContent = randomSentiment;
+            sentimentText.style.color = colors[randomSentiment];
+            messageResult.textContent = messages[randomSentiment];
+            ratingResult.textContent = ratings[randomSentiment];
+
+            // Mostrar resultados
+            spinner.style.display = "none";
+            resultDashboard.classList.remove("hidden");
+
+            // Actualizar gráfico
+            updateChart(randomSentiment);
+          }, 1500); // Simulación de análisis con 1.5s de espera
+        });
+
+      // Configuración del gráfico
+      let ctx = document.getElementById("sentimentChart").getContext("2d");
+      let sentimentData = { Positivo: 0, Negativo: 0, Neutro: 0 };
+      let sentimentChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: ["Positive", "Negative", "Neutral"],
+          datasets: [
+            {
+              label: "Reviews",
+              data: [0, 0, 0],
+              backgroundColor: ["green", "red", "gray"],
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          scales: { y: { beginAtZero: true } },
+        },
+      });
+
+      function updateChart(sentiment) {
+        sentimentData[sentiment]++;
+        sentimentChart.data.datasets[0].data = Object.values(sentimentData);
+        sentimentChart.update();
+      }
+    </script>
+  </body>
+</html>
