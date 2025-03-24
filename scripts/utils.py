@@ -1,8 +1,6 @@
 import pandas as pd
-import nltk
-from nltk.tokenize import word_tokenize
-from nltk.stem import WordNetLemmatizer
-from nltk.corpus import wordnet, stopwords
+import spacy
+from nltk.corpus import stopwords
 
 def deleteRecords(df, col, col_or_row):
     if col_or_row == 1:
@@ -46,16 +44,41 @@ def process_null_values(data: pd.DataFrame) ->pd.Series: #tipamos la funcion her
         print('data limpiada maestro, que tengas un buen dia :)')
     else:
         print('No hay columnas con valores faltantes')
-         
-#funcion de lematizacion y tokenizacion
-lemmatizer = WordNetLemmatizer()
-# Obtener stopwords en inglés
-stop_words = set(stopwords.words('english'))
 
-customs_stop_wards = stop_words - {"not", "no", "never", "ever"}#dejamos habilitadas estas palabras
+# Cargar los modelos de spaCy
+nlp_en = spacy.load("en_core_web_sm", disable=["parser", "ner"])
+nlp_es = spacy.load("es_core_news_sm", disable=["parser", "ner"])
 
-def tokenice_and_lemati(text):
-    tokens = word_tokenize(text.lower())#convertimos todo a minusc y luego lo tokenizamos jijijij
-    filter_tokens = [token for token in tokens if token not in customs_stop_wards]
-    lematized_tokens = [lemmatizer.lemmatize(token, pos='v') for token in filter_tokens]
-    return ' '.join(lematized_tokens)
+# Definir stopwords
+stop_words_en = set(spacy.lang.en.stop_words.STOP_WORDS) - {"not", "no", "never", "ever","bad"}
+stop_words_es = set(spacy.lang.es.stop_words.STOP_WORDS) - {"no", "nunca", "jamás","mejor","peor"}
+
+# Función para procesar en lote
+def tokenice_and_lemati(texts, process, language):
+    if language == 'en':
+        nlp = nlp_en
+        stop_words = stop_words_en
+    elif language == 'es':
+        nlp = nlp_es
+        stop_words = stop_words_es
+    else:
+        raise ValueError("Idioma no soportado. Usa 'en' o 'es'.")
+
+    # Procesar los textos en lote
+    docs = nlp.pipe(texts)
+
+    # Procesar cada documento
+    results = []
+    for doc in docs:
+        # Tokenización y eliminación de stopwords
+        filtered_tokens = [token.text for token in doc if token.text not in stop_words and token.is_alpha]
+
+        # Lematización si process es 1
+        if process == 1:
+            lemmatized_tokens = [token.lemma_ for token in doc if token.text not in stop_words and token.is_alpha]
+            results.append(" ".join(lemmatized_tokens))
+        else:
+            results.append(" ".join(filtered_tokens))
+
+    return results
+      
